@@ -1,0 +1,29 @@
+# Requisitos para o módulo de Machine Learning do Misa-Cash
+
+# Científicos e Análise de Dados
+numpy>=1.20.0
+pandas>=1.3.0
+scipy>=1.7.0
+
+# Machine Learning
+scikit-learn>=1.0.0
+joblib>=1.1.0
+
+# Visualização
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# Web/API
+flask>=2.0.0
+requests>=2.25.0
+
+# Utilitários
+python-dateutil>=2.8.0
+tqdm>=4.60.0
+
+# Para modelos mais avançados (opcional, pode ser descomentado se necessário)
+# xgboost>=1.4.0
+# lightgbm>=3.2.0
+# tensorflow>=2.6.0
+# keras>=2.6.0
+# torch>=1.9.0 

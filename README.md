@@ -1,65 +1,83 @@
-# ML Finance Platform
+# Misa-Cash
 
-## Visão Geral
-Sistema de machine learning para análise e previsão financeira, com foco em robustez, escalabilidade e precisão.
+Uma aplicação para gerenciamento de finanças pessoais, desenvolvida com Python Flask no backend e React no frontend, com recursos de Machine Learning para análise e previsão de gastos.
 
 ## Estrutura do Projeto
+
 ```
-ml_finance_platform/
-├── data/               # Dados brutos e processados
-├── notebooks/          # Jupyter notebooks para análise
-├── src/               # Código fonte principal
-├── tests/             # Testes unitários e de integração
-├── configs/           # Arquivos de configuração
-└── docs/              # Documentação detalhada
+Misa-Cash-Machine-learning-/
+│
+├── src/                      # Código fonte
+│   └── web/
+│       ├── backend/          # API Flask
+│       │   ├── app/          # Código da aplicação
+│       │   ├── tests/        # Testes da aplicação
+│       │   └── run.py        # Script para executar a aplicação
+│       │
+│       └── frontend/         # Aplicação React (a ser desenvolvida)
+│
+├── setup.py                  # Configuração do pacote Python
+├── DESENVOLVIMENTO.md        # Instruções detalhadas para desenvolvimento
+└── README.md                 # Este arquivo
 ```
 
-## Documentação Principal
-- [Especificação Técnica](docs/TECHNICAL_SPEC.md)
-- [Roadmap Detalhado](docs/ROADMAP.md)
-- [Guia de Desenvolvimento](docs/DEVELOPMENT.md)
-- [Arquitetura](docs/ARCHITECTURE.md)
+## Instalação Rápida
 
-## Requisitos
-- Python 3.9+
-- Docker
-- Redis
-- PostgreSQL/TimescaleDB
+O projeto está configurado como um pacote Python, facilitando a instalação e o desenvolvimento:
 
-## Instalação
 ```bash
-# Criar ambiente virtual
+# Clonar o repositório
+git clone https://github.com/Misael-art/Misa-Cash-Machine-learning-.git
+cd Misa-Cash-Machine-learning-
+
+# Criar e ativar ambiente virtual
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-.\venv\Scripts\activate  # Windows
+venv\Scripts\activate.ps1  # Para Windows com PowerShell
+# OU
+source venv/bin/activate   # Para Linux/macOS
 
-# Instalar dependências
-pip install -r requirements.txt
-
-# Configurar ambiente
-python setup.py develop
+# Instalar o pacote em modo desenvolvimento
+pip install -e .
 ```
 
-## Uso Rápido
-```python
-from ml_finance import MLFinanceSystem
+Para mais detalhes sobre desenvolvimento, consulte [DESENVOLVIMENTO.md](DESENVOLVIMENTO.md).
 
-# Inicializar sistema
-system = MLFinanceSystem()
+## Executando a Aplicação
 
-# Carregar dados
-system.load_data('AAPL')
-
-# Treinar modelo
-system.train()
-
-# Fazer previsões
-predictions = system.predict()
+```bash
+cd src/web/backend
+python run.py
 ```
 
-## Contribuição
-Por favor, leia [CONTRIBUTING.md](docs/CONTRIBUTING.md) para detalhes sobre nosso código de conduta e processo de submissão de pull requests.
+A API estará disponível em `http://localhost:5000/api`.
+
+## API Endpoints
+
+### Transações
+
+- `GET /api/transactions` - Lista todas as transações
+- `GET /api/transactions/<id>` - Obtém uma transação específica
+- `POST /api/transactions` - Cria uma nova transação
+- `PUT /api/transactions/<id>` - Atualiza uma transação existente
+- `DELETE /api/transactions/<id>` - Remove uma transação
+- `GET /api/transactions/summary` - Obtém um resumo das transações (receitas, despesas e saldo)
+
+## Funcionalidades
+
+- Registro de receitas e despesas
+- Categorização das transações
+- Resumo financeiro
+- (Mais funcionalidades serão adicionadas)
+
+## Machine Learning (Planejado)
+
+Futuramente, o projeto incluirá recursos de Machine Learning:
+
+- Previsão de gastos
+- Detecção de anomalias nas transações
+- Recomendações de economia
+- Análise de padrões de gastos
 
 ## Licença
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE.md](LICENSE.md) para detalhes. 
+
+Este projeto está licenciado sob a licença MIT. 

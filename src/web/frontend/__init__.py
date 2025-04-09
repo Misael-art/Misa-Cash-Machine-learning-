@@ -1,0 +1,1 @@
+# Este arquivo indica que o diretório frontend é um pacote Python 

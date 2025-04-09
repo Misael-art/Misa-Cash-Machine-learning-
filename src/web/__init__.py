@@ -1,0 +1,1 @@
+# Este arquivo indica que o diretório web é um pacote Python 

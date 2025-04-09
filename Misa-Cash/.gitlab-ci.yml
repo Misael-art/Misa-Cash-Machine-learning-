@@ -1,0 +1,86 @@
+image: ubuntu:latest
+
+stages:
+  - test
+  - lint
+  - build
+  - deploy
+  - security
+
+variables:
+  NODE_VERSION: "18.x"
+  PYTHON_VERSION: "3.9"
+
+cache:
+  paths:
+    - src/web/frontend/node_modules/
+    - src/web/backend/.pytest_cache/
+    - src/web/backend/__pycache__/
+
+.test_template: &test_definition
+  stage: test
+  script:
+    - apt-get update && apt-get install -y nodejs npm python3 python3-pip
+    - cd src/web/frontend && npm ci
+    - cd ../../src/web/backend
+    - pip install -r requirements.txt
+    - pytest
+
+test:frontend:
+  <<: *test_definition
+  script:
+    - cd src/web/frontend
+    - npm ci
+    - npm run test
+
+test:backend:
+  <<: *test_definition
+  script:
+    - cd src/web/backend
+    - pip install -r requirements.txt
+    - pytest
+
+lint:
+  stage: lint
+  script:
+    - apt-get update && apt-get install -y nodejs npm python3 python3-pip
+    - cd src/web/frontend
+    - npm ci
+    - npm run lint
+    - cd ../../src/web/backend
+    - pip install black flake8
+    - black . --check
+    - flake8 .
+
+build:
+  stage: build
+  script:
+    - apt-get update && apt-get install -y nodejs npm python3 python3-pip
+    - cd src/web/frontend
+    - npm ci
+    - npm run build
+    - cd ../../src/web/backend
+    - pip install -r requirements.txt
+    - python setup.py build
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying to production..."
+  only:
+    - main
+  environment:
+    name: production
+
+security:
+  stage: security
+  script:
+    - apt-get update && apt-get install -y nodejs npm python3 python3-pip
+    - cd src/web/frontend
+    - npm audit
+    - cd ../../src/web/backend
+    - pip install bandit
+    - bandit -r .
+  allow_failure: true 

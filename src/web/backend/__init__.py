@@ -1,0 +1,1 @@
+# Este arquivo indica que o diretório backend é um pacote Python 

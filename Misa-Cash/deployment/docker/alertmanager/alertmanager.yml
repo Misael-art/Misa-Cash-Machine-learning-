@@ -1,0 +1,67 @@
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@misacash.com'
+  smtp_auth_username: '${SMTP_USERNAME}'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: 'email-notifications'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'urgent-notifications'
+      continue: true
+    - match:
+        severity: warning
+      receiver: 'email-notifications'
+
+receivers:
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'team@misacash.com'
+        send_resolved: true
+        headers:
+          subject: 'Misa Cash Alert: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Alerta do Misa Cash</h2>
+          <p><strong>Alerta:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Severidade:</strong> {{ .CommonLabels.severity }}</p>
+          <p><strong>Descrição:</strong> {{ .CommonAnnotations.description }}</p>
+          <p><strong>Valor:</strong> {{ .CommonAnnotations.value }}</p>
+          <p><strong>Início:</strong> {{ .StartsAt }}</p>
+          {{ if .Status.Resolved }}
+          <p><strong>Resolvido em:</strong> {{ .EndsAt }}</p>
+          {{ end }}
+
+  - name: 'urgent-notifications'
+    email_configs:
+      - to: 'oncall@misacash.com'
+        send_resolved: true
+        headers:
+          subject: 'URGENTE: Misa Cash Alert: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>ALERTA URGENTE DO MISA CASH</h2>
+          <p><strong>Alerta:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Severidade:</strong> {{ .CommonLabels.severity }}</p>
+          <p><strong>Descrição:</strong> {{ .CommonAnnotations.description }}</p>
+          <p><strong>Valor:</strong> {{ .CommonAnnotations.value }}</p>
+          <p><strong>Início:</strong> {{ .StartsAt }}</p>
+          {{ if .Status.Resolved }}
+          <p><strong>Resolvido em:</strong> {{ .EndsAt }}</p>
+          {{ end }}
+    webhook_configs:
+      - url: 'https://hooks.slack.com/services/${SLACK_WEBHOOK_URL}'
+        send_resolved: true
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service'] 

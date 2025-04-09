@@ -1,0 +1,54 @@
+name: Validação da Estrutura do Projeto
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Configuração do Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Verificar estrutura do projeto
+        run: |
+          echo "Verificando estrutura do projeto..."
+          
+          # Verifica se os diretórios principais existem
+          dirs_to_check=("src" "src/ml" "src/web" "scripts")
+          for dir in "${dirs_to_check[@]}"; do
+            if [ ! -d "$dir" ]; then
+              echo "ERRO: Diretório $dir não existe"
+              exit 1
+            fi
+          done
+          
+          # Verifica se não há modificações em Misa-Cash sem avisar
+          if git diff --name-only HEAD~1 HEAD | grep -q "^Misa-Cash/"; then
+            echo "AVISO: Modificações detectadas no diretório Misa-Cash"
+            echo "Prefira desenvolver no diretório principal do projeto"
+          fi
+          
+          # Validação concluída com sucesso
+          echo "Estrutura do projeto validada com sucesso!"
+      
+      - name: Validar arquivos Python
+        run: |
+          echo "Verificando arquivos Python..."
+          find src -name "*.py" -type f -exec python -m py_compile {} \;
+          
+          if [ $? -ne 0 ]; then
+            echo "ERRO: Verificação da sintaxe Python falhou"
+            exit 1
+          fi
+          
+          echo "Todos os arquivos Python são válidos!" 

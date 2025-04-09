@@ -4,22 +4,48 @@ Uma aplicação para gerenciamento de finanças pessoais, desenvolvida com Pytho
 
 ## Estrutura do Projeto
 
+A estrutura do projeto Misa-Cash foi organizada da seguinte forma:
+
 ```
-Misa-Cash-Machine-learning-/
-│
-├── src/                      # Código fonte
-│   └── web/
-│       ├── backend/          # API Flask
-│       │   ├── app/          # Código da aplicação
-│       │   ├── tests/        # Testes da aplicação
-│       │   └── run.py        # Script para executar a aplicação
-│       │
-│       └── frontend/         # Aplicação React (a ser desenvolvida)
-│
-├── setup.py                  # Configuração do pacote Python
-├── DESENVOLVIMENTO.md        # Instruções detalhadas para desenvolvimento
-└── README.md                 # Este arquivo
+Misa-Cash-Machine-Learning/
+├── src/                       # Código fonte principal do projeto
+│   ├── ml/                    # Módulos de Machine Learning
+│   │   ├── api/               # API para integração dos serviços de ML
+│   │   ├── config/            # Configurações dos modelos de ML
+│   │   ├── data/              # Processamento de dados para ML
+│   │   ├── models/            # Implementação dos modelos preditivos
+│   │   └── utils/             # Utilitários para visualização e análise
+│   ├── web/                   # Aplicação web (backend e frontend)
+│   │   ├── backend/           # API REST e lógica de negócio
+│   │   └── frontend/          # Interface de usuário (React)
+│   ├── backend/               # Componentes adicionais do backend
+│   └── frontend/              # Componentes adicionais do frontend
+├── scripts/                   # Scripts de automação e utilidades
+├── venv/                      # Ambiente virtual Python (não versionado)
+├── ROADMAP.md                 # Planejamento e acompanhamento do projeto
+├── setup.py                   # Configuração do pacote Python
+└── README.md                  # Documentação principal
 ```
+
+### Diretrizes de Desenvolvimento
+
+1. **Desenvolvimento Principal**: Todo novo código deve ser adicionado ao diretório raiz do projeto, seguindo a estrutura acima.
+
+2. **Módulo de Machine Learning**: Desenvolva os modelos de ML e suas visualizações em `src/ml/`.
+
+3. **Diretório `Misa-Cash-Machine-learning-`**: Este é um submódulo que reflete o repositório GitHub. Não desenvolva código diretamente nele.
+
+4. **Diretório `Misa-Cash`**: Este diretório contém a estrutura original do projeto e serve como referência. O desenvolvimento ativo deve acontecer nos diretórios principais do projeto e não dentro deste diretório.
+
+### Fluxo de Trabalho Recomendado
+
+1. Desenvolva novas funcionalidades em `src/`
+2. Execute os testes com `python run_tests.py`
+3. Execute a aplicação com `python run_app.py`
+4. Utilize `git add` e `git commit` para versionar as alterações
+5. Utilize `git push` para enviar as alterações para o repositório GitHub
+
+Esta estrutura evita duplicação de código e mantém o projeto organizado para facilitar o desenvolvimento futuro.
 
 ## Instalação Rápida
 

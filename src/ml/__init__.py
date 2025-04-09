@@ -28,5 +28,11 @@ forecast = predictor.predict(future_months=3)
 from src.ml.models.expense_predictor import ExpensePredictor
 from src.ml.models.anomaly_detector import AnomalyDetector
 from src.ml.models.transaction_categorizer import TransactionCategorizer
+from src.ml.models.spending_pattern_analyzer import SpendingPatternAnalyzer
 
-__all__ = ['ExpensePredictor', 'AnomalyDetector', 'TransactionCategorizer'] 
+__all__ = [
+    'ExpensePredictor', 
+    'AnomalyDetector', 
+    'TransactionCategorizer',
+    'SpendingPatternAnalyzer'
+] 

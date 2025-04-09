@@ -17,6 +17,7 @@ from typing import Dict, List, Tuple, Any, Optional, Union
 from ..models.expense_predictor import ExpensePredictor
 from ..models.anomaly_detector import AnomalyDetector
 from ..models.category_classifier import CategoryClassifier
+from ..models.spending_pattern_analyzer import SpendingPatternAnalyzer
 
 # Configuração de logging
 logger = logging.getLogger(__name__)
@@ -43,12 +44,14 @@ class MLService:
         self.expense_predictor = ExpensePredictor()
         self.anomaly_detector = AnomalyDetector()
         self.category_classifier = CategoryClassifier()
+        self.pattern_analyzer = SpendingPatternAnalyzer()
         
         # Status de carregamento dos modelos
         self.models_loaded = {
             'expense_predictor': False,
             'anomaly_detector': False,
-            'category_classifier': False
+            'category_classifier': False,
+            'pattern_analyzer': False
         }
         
         # Tenta carregar os modelos existentes
@@ -60,103 +63,158 @@ class MLService:
             os.makedirs(self.models_dir)
             logger.info(f"Diretório de modelos criado: {self.models_dir}")
     
-    def load_models(self) -> Dict[str, bool]:
+    def load_models(self) -> bool:
         """Carrega todos os modelos treinados do disco.
         
         Returns:
-            Dicionário com status de carregamento de cada modelo.
+            Booleano indicando sucesso parcial ou total.
         """
-        # Tenta carregar o modelo de previsão de gastos
-        expense_predictor_path = os.path.join(self.models_dir, 'expense_predictor.joblib')
-        try:
-            if os.path.exists(expense_predictor_path):
-                self.expense_predictor = joblib.load(expense_predictor_path)
-                self.models_loaded['expense_predictor'] = True
-                logger.info("Modelo de previsão de gastos carregado com sucesso")
-        except Exception as e:
-            logger.error(f"Erro ao carregar modelo de previsão de gastos: {str(e)}")
-        
-        # Tenta carregar o modelo de detecção de anomalias
-        anomaly_detector_path = os.path.join(self.models_dir, 'anomaly_detector.joblib')
-        try:
-            if os.path.exists(anomaly_detector_path):
-                self.anomaly_detector = joblib.load(anomaly_detector_path)
-                self.models_loaded['anomaly_detector'] = True
-                logger.info("Modelo de detecção de anomalias carregado com sucesso")
-        except Exception as e:
-            logger.error(f"Erro ao carregar modelo de detecção de anomalias: {str(e)}")
-        
-        # Tenta carregar o modelo de classificação de categorias
-        category_classifier_path = os.path.join(self.models_dir, 'category_classifier.joblib')
-        try:
-            if os.path.exists(category_classifier_path):
-                self.category_classifier = joblib.load(category_classifier_path)
-                self.models_loaded['category_classifier'] = True
-                logger.info("Modelo de classificação de categorias carregado com sucesso")
-        except Exception as e:
-            logger.error(f"Erro ao carregar modelo de classificação de categorias: {str(e)}")
-            
-        return self.models_loaded
-    
-    def save_models(self) -> None:
-        """Salva todos os modelos treinados para o disco."""
         self._ensure_models_dir()
         
-        # Salva o modelo de previsão de gastos
+        success = True
+        
+        # ExpensePredictor
         expense_predictor_path = os.path.join(self.models_dir, 'expense_predictor.joblib')
-        joblib.dump(self.expense_predictor, expense_predictor_path)
-        logger.info(f"Modelo de previsão de gastos salvo em {expense_predictor_path}")
+        if os.path.exists(expense_predictor_path):
+            try:
+                self.expense_predictor = joblib.load(expense_predictor_path)
+                self.models_loaded['expense_predictor'] = True
+                logger.info(f"Modelo de previsão de despesas carregado de {expense_predictor_path}")
+            except Exception as e:
+                logger.error(f"Erro ao carregar modelo de previsão: {str(e)}")
+                success = False
         
-        # Salva o modelo de detecção de anomalias
+        # AnomalyDetector
         anomaly_detector_path = os.path.join(self.models_dir, 'anomaly_detector.joblib')
-        joblib.dump(self.anomaly_detector, anomaly_detector_path)
-        logger.info(f"Modelo de detecção de anomalias salvo em {anomaly_detector_path}")
+        if os.path.exists(anomaly_detector_path):
+            try:
+                self.anomaly_detector = joblib.load(anomaly_detector_path)
+                self.models_loaded['anomaly_detector'] = True
+                logger.info(f"Modelo de detecção de anomalias carregado de {anomaly_detector_path}")
+            except Exception as e:
+                logger.error(f"Erro ao carregar modelo de anomalias: {str(e)}")
+                success = False
         
-        # Salva o modelo de classificação de categorias
+        # CategoryClassifier
         category_classifier_path = os.path.join(self.models_dir, 'category_classifier.joblib')
-        joblib.dump(self.category_classifier, category_classifier_path)
-        logger.info(f"Modelo de classificação de categorias salvo em {category_classifier_path}")
+        if os.path.exists(category_classifier_path):
+            try:
+                self.category_classifier = joblib.load(category_classifier_path)
+                self.models_loaded['category_classifier'] = True
+                logger.info(f"Modelo de classificação de categorias carregado de {category_classifier_path}")
+            except Exception as e:
+                logger.error(f"Erro ao carregar modelo de categorias: {str(e)}")
+                success = False
+                
+        # SpendingPatternAnalyzer
+        pattern_analyzer_path = os.path.join(self.models_dir, 'pattern_analyzer.joblib')
+        if os.path.exists(pattern_analyzer_path):
+            try:
+                self.pattern_analyzer.load(pattern_analyzer_path)
+                self.models_loaded['pattern_analyzer'] = True
+                logger.info(f"Modelo de análise de padrões carregado de {pattern_analyzer_path}")
+            except Exception as e:
+                logger.error(f"Erro ao carregar modelo de análise de padrões: {str(e)}")
+                success = False
+        
+        return success
+    
+    def save_models(self) -> bool:
+        """Salva todos os modelos treinados no disco.
+        
+        Returns:
+            Booleano indicando sucesso.
+        """
+        self._ensure_models_dir()
+        
+        success = True
+        
+        # ExpensePredictor
+        if self.models_loaded['expense_predictor']:
+            expense_predictor_path = os.path.join(self.models_dir, 'expense_predictor.joblib')
+            try:
+                joblib.dump(self.expense_predictor, expense_predictor_path)
+                logger.info(f"Modelo de previsão de despesas salvo em {expense_predictor_path}")
+            except Exception as e:
+                logger.error(f"Erro ao salvar modelo de previsão: {str(e)}")
+                success = False
+        
+        # AnomalyDetector
+        if self.models_loaded['anomaly_detector']:
+            anomaly_detector_path = os.path.join(self.models_dir, 'anomaly_detector.joblib')
+            try:
+                joblib.dump(self.anomaly_detector, anomaly_detector_path)
+                logger.info(f"Modelo de detecção de anomalias salvo em {anomaly_detector_path}")
+            except Exception as e:
+                logger.error(f"Erro ao salvar modelo de anomalias: {str(e)}")
+                success = False
+        
+        # CategoryClassifier
+        if self.models_loaded['category_classifier']:
+            category_classifier_path = os.path.join(self.models_dir, 'category_classifier.joblib')
+            try:
+                joblib.dump(self.category_classifier, category_classifier_path)
+                logger.info(f"Modelo de classificação de categorias salvo em {category_classifier_path}")
+            except Exception as e:
+                logger.error(f"Erro ao salvar modelo de categorias: {str(e)}")
+                success = False
+                
+        # SpendingPatternAnalyzer
+        if self.models_loaded['pattern_analyzer']:
+            pattern_analyzer_path = os.path.join(self.models_dir, 'pattern_analyzer.joblib')
+            try:
+                self.pattern_analyzer.save(pattern_analyzer_path)
+                logger.info(f"Modelo de análise de padrões salvo em {pattern_analyzer_path}")
+            except Exception as e:
+                logger.error(f"Erro ao salvar modelo de análise de padrões: {str(e)}")
+                success = False
+        
+        return success
     
     def prepare_data_for_models(self, transactions: pd.DataFrame) -> Dict[str, Any]:
         """Prepara os dados para treinamento e uso nos diferentes modelos.
         
         Args:
-            transactions: DataFrame com transações financeiras.
+            transactions: DataFrame com transações brutas.
             
         Returns:
-            Dicionário com dados preparados para cada modelo.
+            Dicionário com DataFrames preparados para cada modelo.
         """
-        logger.info(f"Preparando dados para modelos. Total de transações: {len(transactions)}")
+        # Verifica se temos as colunas mínimas necessárias
+        required_cols = ['data', 'valor', 'descricao']
+        missing_cols = [col for col in required_cols if col not in transactions.columns]
+        if missing_cols:
+            error_msg = f"Colunas ausentes: {', '.join(missing_cols)}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
-        # Garante que as colunas necessárias existem
-        required_columns = ['data', 'valor', 'descricao', 'categoria']
-        missing_columns = [col for col in required_columns if col not in transactions.columns]
-        
-        if missing_columns:
-            logger.error(f"Colunas necessárias ausentes: {missing_columns}")
-            raise ValueError(f"Dados não contêm todas as colunas necessárias. Ausentes: {missing_columns}")
-        
-        # Cria cópia para evitar modificar o DataFrame original
+        # Cria cópia para não alterar o original
         data = transactions.copy()
         
-        # Converte coluna de data para datetime se necessário
+        # Converte data para datetime
         if not pd.api.types.is_datetime64_any_dtype(data['data']):
             data['data'] = pd.to_datetime(data['data'])
         
-        # Garante que valores são numéricos
-        data['valor'] = pd.to_numeric(data['valor'], errors='coerce')
+        # Adiciona coluna de mês para agregações
+        data['mes'] = pd.to_datetime(data['data']).dt.to_period('M').dt.to_timestamp()
         
-        # Remove linhas com valores ausentes
-        data = data.dropna(subset=['data', 'valor'])
+        # Prepara dados para o ExpensePredictor (agregado por mês)
+        expense_data_agg = data.groupby('mes').agg({
+            'valor': 'sum'
+        }).reset_index()
         
-        # Dados para previsão de gastos: agrega por mês
-        expense_data = data.copy()
-        expense_data['mes'] = expense_data['data'].dt.to_period('M')
-        expense_data_agg = expense_data.groupby('mes')['valor'].sum().reset_index()
-        expense_data_agg['mes'] = expense_data_agg['mes'].dt.to_timestamp()
-        
-        # Dados para detecção de anomalias
-        anomaly_data = data[['data', 'valor', 'descricao', 'categoria']].copy()
+        # Adiciona categorias se não existirem
+        if 'categoria' not in data.columns:
+            # Se não temos categoria, usamos o modelo para predizer
+            if self.models_loaded['category_classifier']:
+                data['categoria'] = self.category_classifier.predict(data['descricao'])
+            else:
+                data['categoria'] = 'DESCONHECIDO'
+                
+        # Prepara dados para detecção de anomalias (sem agregação)
+        anomaly_data = data[['data', 'valor', 'descricao']].copy()
+        if 'categoria' in data.columns:
+            anomaly_data['categoria'] = data['categoria']
         
         # Dados para classificação de categorias
         classifier_data = data[['descricao', 'categoria']].copy()
@@ -165,6 +223,7 @@ class MLService:
             'expense_predictor': expense_data_agg,
             'anomaly_detector': anomaly_data,
             'category_classifier': classifier_data,
+            'pattern_analyzer': data,
             'raw_data': data
         }
     
@@ -193,14 +252,14 @@ class MLService:
         """Treina o modelo de detecção de anomalias.
         
         Args:
-            data: DataFrame com dados preparados para o modelo de anomalias.
+            data: DataFrame com dados para o detector de anomalias.
             
         Returns:
-            Dicionário com métricas de desempenho do modelo.
+            Dicionário com métricas de desempenho.
         """
         logger.info(f"Treinando modelo de detecção de anomalias com {len(data)} registros")
         
-        metrics = self.anomaly_detector.train(data)
+        metrics = self.anomaly_detector.fit(data)
         self.models_loaded['anomaly_detector'] = True
         
         # Salva o modelo treinado
@@ -214,14 +273,22 @@ class MLService:
         """Treina o modelo de classificação de categorias.
         
         Args:
-            data: DataFrame com dados preparados para o modelo de classificação.
+            data: DataFrame com textos e categorias para treino.
             
         Returns:
-            Dicionário com métricas de desempenho do modelo.
+            Dicionário com métricas de desempenho.
         """
+        # Verifica se temos as colunas necessárias
+        if 'descricao' not in data.columns or 'categoria' not in data.columns:
+            raise ValueError("Dados devem ter colunas 'descricao' e 'categoria'")
+        
         logger.info(f"Treinando modelo de classificação de categorias com {len(data)} registros")
         
-        metrics = self.category_classifier.train(data)
+        # Treina o modelo
+        metrics = self.category_classifier.train(
+            X=data['descricao'], 
+            y=data['categoria']
+        )
         self.models_loaded['category_classifier'] = True
         
         # Salva o modelo treinado
@@ -230,30 +297,89 @@ class MLService:
         logger.info(f"Modelo de classificação de categorias salvo em {category_classifier_path}")
         
         return metrics
-    
-    def train_all_models(self, transactions: pd.DataFrame) -> Dict[str, Dict[str, float]]:
-        """Treina todos os modelos com os dados fornecidos.
+        
+    def train_pattern_analyzer(self, data: pd.DataFrame) -> Dict[str, Any]:
+        """Treina o analisador de padrões de gastos.
         
         Args:
-            transactions: DataFrame com transações financeiras.
+            data: DataFrame com transações.
             
         Returns:
-            Dicionário com métricas de desempenho de cada modelo.
+            Dicionário com resultados da análise.
         """
-        logger.info(f"Iniciando treinamento de todos os modelos")
+        logger.info(f"Treinando analisador de padrões de gastos com {len(data)} registros")
         
-        prepared_data = self.prepare_data_for_models(transactions)
-        metrics = {}
+        # Realiza a análise completa
+        patterns = self.pattern_analyzer.find_patterns(data)
+        self.models_loaded['pattern_analyzer'] = True
         
-        metrics['expense_predictor'] = self.train_expense_predictor(prepared_data['expense_predictor'])
-        metrics['anomaly_detector'] = self.train_anomaly_detector(prepared_data['anomaly_detector'])
-        metrics['category_classifier'] = self.train_category_classifier(prepared_data['category_classifier'])
+        # Salva o modelo treinado
+        pattern_analyzer_path = os.path.join(self.models_dir, 'pattern_analyzer.joblib')
+        self.pattern_analyzer.save(pattern_analyzer_path)
+        logger.info(f"Modelo de análise de padrões salvo em {pattern_analyzer_path}")
         
-        logger.info(f"Todos os modelos treinados com sucesso")
-        
-        return metrics
+        return patterns
     
-    def predict_expenses(self, months: int = 3, transactions: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
+    def train_all_models(self, transactions: pd.DataFrame) -> Dict[str, Any]:
+        """Treina todos os modelos com o mesmo conjunto de dados.
+        
+        Args:
+            transactions: DataFrame com transações.
+            
+        Returns:
+            Dicionário com resultados do treinamento de cada modelo.
+        """
+        logger.info(f"Iniciando treinamento de todos os modelos com {len(transactions)} transações")
+        
+        # Preparar dados para cada modelo
+        data_dict = self.prepare_data_for_models(transactions)
+        
+        results = {}
+        
+        # Treina modelo de previsão de gastos
+        try:
+            expense_metrics = self.train_expense_predictor(data_dict['expense_predictor'])
+            results['expense_predictor'] = expense_metrics
+        except Exception as e:
+            logger.error(f"Erro ao treinar modelo de previsão: {str(e)}")
+            results['expense_predictor'] = {"error": str(e)}
+        
+        # Treina detector de anomalias
+        try:
+            anomaly_metrics = self.train_anomaly_detector(data_dict['anomaly_detector'])
+            results['anomaly_detector'] = anomaly_metrics
+        except Exception as e:
+            logger.error(f"Erro ao treinar detector de anomalias: {str(e)}")
+            results['anomaly_detector'] = {"error": str(e)}
+        
+        # Treina classificador de categorias
+        try:
+            if 'categoria' in transactions.columns:
+                category_metrics = self.train_category_classifier(data_dict['category_classifier'])
+                results['category_classifier'] = category_metrics
+            else:
+                logger.warning("Coluna 'categoria' ausente, pulando treinamento do classificador")
+                results['category_classifier'] = {"error": "Dados de categoria ausentes"}
+        except Exception as e:
+            logger.error(f"Erro ao treinar classificador de categorias: {str(e)}")
+            results['category_classifier'] = {"error": str(e)}
+            
+        # Treina analisador de padrões
+        try:
+            pattern_results = self.train_pattern_analyzer(data_dict['pattern_analyzer'])
+            results['pattern_analyzer'] = pattern_results
+        except Exception as e:
+            logger.error(f"Erro ao treinar analisador de padrões: {str(e)}")
+            results['pattern_analyzer'] = {"error": str(e)}
+        
+        # Salva todos os modelos
+        self.save_models()
+        
+        logger.info(f"Treinamento de todos os modelos concluído com sucesso")
+        return results
+    
+    def predict_expenses(self, months: int = 3, 
+                       transactions: Optional[pd.DataFrame] = None) -> Dict[str, Any]:
         """Prevê gastos para os próximos meses.
         
         Args:
@@ -285,6 +411,42 @@ class MLService:
         }
         
         return result
+    
+    def analyze_spending_patterns(self, transactions: pd.DataFrame,
+                                include_predictions: bool = True) -> Dict[str, Any]:
+        """Analisa padrões de gastos e gera insights.
+        
+        Args:
+            transactions: DataFrame com transações.
+            include_predictions: Se deve incluir integração com previsões.
+            
+        Returns:
+            Dicionário com resultados da análise de padrões.
+        """
+        if not self.models_loaded['pattern_analyzer']:
+            # Se não temos um modelo carregado, fazemos análise sob demanda
+            logger.info("Modelo de análise de padrões não estava carregado, executando análise sob demanda")
+            patterns = self.pattern_analyzer.find_patterns(transactions)
+            self.models_loaded['pattern_analyzer'] = True
+        else:
+            # Se já temos um modelo, usamos ele
+            patterns = self.pattern_analyzer.find_patterns(transactions)
+        
+        # Insights de padrões
+        insights = self.pattern_analyzer.recommend_insights(transactions)
+        
+        results = {
+            'patterns': patterns,
+            'insights': insights
+        }
+        
+        # Integra com previsões se solicitado e temos um preditor carregado
+        if include_predictions and self.models_loaded['expense_predictor']:
+            integrated_results = self.pattern_analyzer.integrate_with_expense_predictor(
+                transactions, self.expense_predictor)
+            results['integrated_analysis'] = integrated_results
+        
+        return results
     
     def detect_anomalies(self, transactions: pd.DataFrame) -> Dict[str, Any]:
         """Detecta transações anômalas.
@@ -371,80 +533,6 @@ class MLService:
             results.append(result)
         
         return results
-    
-    def analyze_spending_patterns(self, transactions: pd.DataFrame) -> Dict[str, Any]:
-        """Analisa padrões de gastos nas transações.
-        
-        Args:
-            transactions: DataFrame com histórico de transações.
-            
-        Returns:
-            Dicionário com análises de padrões de gastos.
-        """
-        logger.info(f"Analisando padrões de gastos em {len(transactions)} transações")
-        
-        # Garante que as colunas necessárias existam
-        required_columns = ['data', 'valor', 'categoria']
-        if not all(col in transactions.columns for col in required_columns):
-            missing = [col for col in required_columns if col not in transactions.columns]
-            logger.error(f"Colunas necessárias ausentes: {missing}")
-            raise ValueError(f"Dados não contêm todas as colunas necessárias. Ausentes: {missing}")
-        
-        # Cria cópia para evitar modificar o DataFrame original
-        data = transactions.copy()
-        
-        # Converte coluna de data para datetime se necessário
-        if not pd.api.types.is_datetime64_any_dtype(data['data']):
-            data['data'] = pd.to_datetime(data['data'])
-        
-        # Garante que valores são numéricos
-        data['valor'] = pd.to_numeric(data['valor'], errors='coerce')
-        
-        # Adiciona colunas de tempo
-        data['mes'] = data['data'].dt.to_period('M')
-        data['dia_semana'] = data['data'].dt.day_name()
-        
-        # Análise por categoria
-        category_spending = data.groupby('categoria')['valor'].agg(['sum', 'mean', 'count']).reset_index()
-        category_spending.columns = ['categoria', 'total', 'media', 'contagem']
-        category_spending = category_spending.sort_values('total', ascending=False)
-        
-        # Análise por mês
-        monthly_spending = data.groupby('mes')['valor'].sum().reset_index()
-        monthly_spending['mes'] = monthly_spending['mes'].dt.to_timestamp()
-        monthly_spending = monthly_spending.sort_values('mes')
-        
-        # Análise por dia da semana
-        weekday_spending = data.groupby('dia_semana')['valor'].agg(['sum', 'mean', 'count']).reset_index()
-        weekday_spending.columns = ['dia_semana', 'total', 'media', 'contagem']
-        
-        # Tendência de gastos (regressão linear simples sobre gastos mensais)
-        if len(monthly_spending) > 1:
-            x = np.arange(len(monthly_spending)).reshape(-1, 1)
-            y = monthly_spending['valor'].values
-            
-            from sklearn.linear_model import LinearRegression
-            model = LinearRegression().fit(x, y)
-            slope = model.coef_[0]
-            trend_direction = "crescente" if slope > 0 else "decrescente" if slope < 0 else "estável"
-            trend_value = abs(slope)
-        else:
-            trend_direction = "indefinido"
-            trend_value = 0
-        
-        # Formata resultados para retorno
-        result = {
-            'category_analysis': category_spending.to_dict(orient='records'),
-            'monthly_analysis': monthly_spending.to_dict(orient='records'),
-            'weekday_analysis': weekday_spending.to_dict(orient='records'),
-            'top_categories': category_spending.head(5).to_dict(orient='records'),
-            'trend': {
-                'direction': trend_direction,
-                'value': float(trend_value)
-            }
-        }
-        
-        return result
     
     def generate_insights(self, transactions: pd.DataFrame) -> List[Dict[str, Any]]:
         """Gera insights financeiros personalizados a partir dos dados.
